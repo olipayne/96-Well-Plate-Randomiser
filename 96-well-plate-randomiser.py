@@ -18,6 +18,13 @@ csv_well_column = 6
 
 # Control (plate, well) tuples which should not be moved (if empty, all wells will be moved)
 control_wells = [("1", "A1"), ("2", "A1"), ("3", "A1")]
+
+# Number of plates (for sanity checking)
+number_of_plates = 3
+
+# How many times should the randomisation be performed? Doesn't really make a difference, but it's here if you want to.
+number_of_randomisations = 1000
+
 ################################################################################
 
 import csv
@@ -34,39 +41,46 @@ with open(csv_input, "r") as csv_file:
         next(csv_reader)
     for row in csv_reader:
         if row[csv_plate_id_column] not in plates:
-            plates.append(row[csv_plate_id_column])
+            plates.append(str(row[csv_plate_id_column]))
 
-# If there are not exactly three unique plates found, we have a problem.
-if len(plates) != 3:
-    print("ERROR: There are not exactly three unique plates in the CSV.")
+# If there are not exactly the correct number of unique plates found, we have a problem.
+if len(plates) != number_of_plates:
+    print(
+        "ERROR: Unexpected number of plates found in CSV. Expected "
+        + str(number_of_plates)
+        + " but found "
+        + str(len(plates))
+        + "."
+    )
     exit()
 
-# Build a list of all wells
+# Build a list of tuples of all possible coordinates for each plate
 wells = []
 for plate in plates:
     for letter in letters:
         for number in numbers:
-            wells.append((plate, letter + str(number)))
+            wells.append((str(plate), letter + str(number)))
 
-# Remove any control wells from the list
+# Remove any control wells from the list, we don't want to move them
 for control_plate, control_well in control_wells:
     for well in wells:
         if well[0] == control_plate and well[1] == control_well:
             wells.remove(well)
 
-# Randomise the list of wells
-random.shuffle(wells)
+# Randomise the list of wells number_of_randomisations times
+for i in range(number_of_randomisations):
+    random.shuffle(wells)
 
-# Iterate through the CSV rows, if the well is not a control well, append a new row with the new coordinates
 with open(csv_input, "r") as csv_file:
     with open(csv_output, "w") as csv_output_file:
         csv_reader = csv.reader(csv_file)
         csv_writer = csv.writer(csv_output_file)
+
         # If the CSV has a header, add two columns to the end and add it to the output CSV
         if csv_has_header:
             csv_writer.writerow(next(csv_reader) + ["output_plate", "output_well"])
 
-        # Iterate through the CSV rows
+        # Loop through the input CSV and add the new columns to the output CSV
         for row in csv_reader:
             if (row[csv_plate_id_column], row[csv_well_column]) not in control_wells:
                 next_well = wells.pop()
