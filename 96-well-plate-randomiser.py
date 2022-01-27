@@ -182,7 +182,7 @@ with open(csv_output, "r") as csv_file:
         if csv_has_header:
             csv_writer.writerow(next(csv_reader))
 
-        # Sort the rows by the output_plate and output_well columns
+        # Sort the rows by the output_plate and output_well columns 
         for row in sorted(
             csv_reader,
             key=lambda x: (x[column_count], x[column_count + 1]),
