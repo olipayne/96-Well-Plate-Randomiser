@@ -100,11 +100,11 @@ for plate in generate_plates:
         for letter in letters:
             wells.append((str(plate), letter + str(number)))
 
-# Remove any control wells from the list, we don't want to move them
+# Remove any control wells from the wells list, taking into account the rename_plates override
 for control_plate, control_well in control_wells:
-    for well in wells:
-        if well[0] == control_plate and well[1] == control_well:
-            wells.remove(well)
+    if len(rename_plates) > 0:
+        control_plate = rename_plates[plates.index(control_plate)]
+    wells.remove((control_plate, control_well))
 
 
 with open(csv_input, "r") as csv_file:
@@ -182,9 +182,13 @@ with open(csv_output, "r") as csv_file:
         if csv_has_header:
             csv_writer.writerow(next(csv_reader))
 
-        # Sort the rows by the output_plate and output_well columns 
+        # Sort the rows by the output_plate and output_well columns with natural sorting
         for row in sorted(
             csv_reader,
-            key=lambda x: (x[column_count], x[column_count + 1]),
+            key=lambda x: (
+                x[column_count],
+                x[column_count + 1][:1],
+                int(x[column_count + 1][1:]),
+            ),
         ):
             csv_writer.writerow(row)
