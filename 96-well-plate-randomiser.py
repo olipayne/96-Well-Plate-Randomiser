@@ -43,20 +43,6 @@ import random
 letters = ["A", "B", "C", "D", "E", "F", "G", "H"]
 numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
-# Custom sorting function to sort the wells A1-H12 in the order A1, A2, ..., H12
-def sort_wells(well_a, well_b):
-    if letters.index(well_a[0]) < letters.index(well_b[0]):
-        return -1
-    elif letters.index(well_a[0]) > letters.index(well_b[0]):
-        return 1
-    elif numbers.index(int(well_a[1])) < numbers.index(int(well_b[1])):
-        return -1
-    elif numbers.index(int(well_a[1])) > numbers.index(int(well_b[1])):
-        return 1
-    else:
-        return 0
-
-
 # Get a list of all plates in the CSV
 plates = []
 with open(csv_input, "r") as csv_file:
@@ -66,6 +52,8 @@ with open(csv_input, "r") as csv_file:
     for row in csv_reader:
         if row[csv_plate_id_column] not in plates:
             plates.append(str(row[csv_plate_id_column]))
+
+print("Found " + str(len(plates)) + " plates in the CSV.")
 
 # Check that the number of plates to be renamed matches the number of plates found in the CSV, if 'rename_plates' is not empty
 if len(rename_plates) > 0 and len(rename_plates) != len(plates):
@@ -89,8 +77,13 @@ if len(plates) != number_of_plates:
 # If we are renaming plates, then we need to override the new plate names
 if len(rename_plates) > 0:
     generate_plates = rename_plates
+    # Let's print which plates we are renaming
+    print("Renaming plates:")
+    for i in range(len(plates)):
+        print(plates[i] + " -> " + rename_plates[i])
 else:
     generate_plates = plates
+    print("No renaming required.")
 
 
 # Build a list of tuples of all possible coordinates for each plate
@@ -102,10 +95,10 @@ for plate in generate_plates:
 
 # Remove any control wells from the wells list, taking into account the rename_plates override
 for control_plate, control_well in control_wells:
+
     if len(rename_plates) > 0:
         control_plate = rename_plates[plates.index(control_plate)]
     wells.remove((control_plate, control_well))
-
 
 with open(csv_input, "r") as csv_file:
     with open(csv_output, "w") as csv_output_file:
@@ -145,8 +138,8 @@ with open(csv_input, "r") as csv_file:
             )
             exit()
 
-        # Slice the wells var to the number of rows we have
-        wells = wells[:row_count]
+        # Slice the wells var to the number of rows we have, minus the number of control wells
+        wells = wells[: row_count - len(control_wells)]
 
         # Shuffle the wells 'number_of_randomisation' times
         for i in range(number_of_randomisations):
@@ -171,6 +164,8 @@ with open(csv_input, "r") as csv_file:
                 row.extend([plate_name, row[csv_well_column]])
                 csv_writer.writerow(row)
 
+print("output CSV written to " + csv_output + ", now sorting...")
+
 
 # Sort the output.csv file by the output_plate and output_well columns
 with open(csv_output, "r") as csv_file:
@@ -192,3 +187,5 @@ with open(csv_output, "r") as csv_file:
             ),
         ):
             csv_writer.writerow(row)
+
+print("output CSV sorted and written to " + csv_sorted)
